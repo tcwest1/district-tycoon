@@ -1,0 +1,850 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>District Builder v2 — Urban School District Strategy Game</title>
+<style>
+:root{
+  --bg:#07101b;
+  --bg2:#0b1423;
+  --panel:#101b2e;
+  --panel2:#15233a;
+  --panel3:#1a2b47;
+  --ink:#edf5ff;
+  --muted:#a8bad8;
+  --line:rgba(255,255,255,.10);
+  --accent:#5db7ff;
+  --accent2:#9f7aea;
+  --green:#48d38e;
+  --gold:#ffd166;
+  --red:#ff6b6b;
+  --cyan:#43d9d9;
+  --shadow:0 18px 55px rgba(0,0,0,.34);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(93,183,255,.18), transparent 28%),
+    radial-gradient(circle at 82% 3%, rgba(159,122,234,.16), transparent 28%),
+    radial-gradient(circle at 50% 105%, rgba(72,211,142,.10), transparent 30%),
+    linear-gradient(180deg,#07101b,#09111d 48%,#070d17);
+  overflow-x:hidden;
+}
+button,select{font:inherit}
+button{
+  color:var(--ink);
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.065);
+  border-radius:13px;
+  padding:10px 12px;
+  cursor:pointer;
+  font-weight:800;
+  transition:.18s ease;
+}
+button:hover{transform:translateY(-1px); background:rgba(255,255,255,.105)}
+button:disabled{opacity:.45; cursor:not-allowed; transform:none}
+button.primary{background:linear-gradient(135deg,var(--accent),#3f8cff); color:#06101d; border:none}
+button.green{background:linear-gradient(135deg,#4be09a,#25bd77); color:#06101d; border:none}
+button.gold{background:linear-gradient(135deg,#ffd166,#f5a623); color:#16100a; border:none}
+button.red{background:linear-gradient(135deg,#ff6b6b,#ef476f); color:#18080b; border:none}
+.wrap{
+  max-width:1680px;
+  margin:0 auto;
+  padding:16px;
+  display:grid;
+  grid-template-columns:minmax(760px,1.55fr) minmax(380px,.75fr);
+  grid-template-rows:auto auto 1fr;
+  gap:16px;
+}
+.card{
+  background:linear-gradient(180deg, rgba(22,35,59,.94), rgba(12,22,38,.96));
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  border-radius:22px;
+  overflow:hidden;
+}
+.top{
+  grid-column:1/-1;
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  align-items:center;
+  padding:18px 20px;
+  position:relative;
+}
+.brand h1{margin:0; font-size:31px; letter-spacing:.1px}
+.brand p{margin:6px 0 0; color:var(--muted); font-size:14px}
+.badges{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:rgba(255,255,255,.055);
+  color:var(--muted);
+  padding:9px 12px;
+  font-size:13px;
+}
+.kpiRow{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:10px;
+}
+.kpi{
+  padding:13px;
+  min-height:96px;
+  position:relative;
+}
+.kpi .label{color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.08em}
+.kpi .num{font-size:26px; font-weight:900; margin-top:7px}
+.kpi .hint{font-size:11px; color:var(--muted); margin-top:5px; line-height:1.25}
+.miniBar{height:7px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; margin-top:9px}
+.miniFill{height:100%; border-radius:999px; transition:width .45s ease}
+.game{
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+}
+.mapHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+  padding:16px 16px 0;
+}
+.mapHeader h2{margin:0; font-size:19px}
+.sub{color:var(--muted); font-size:13px; line-height:1.35}
+.legend{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+.legend span{display:flex; gap:7px; align-items:center; color:var(--muted); background:rgba(255,255,255,.055); border:1px solid var(--line); border-radius:999px; padding:6px 9px; font-size:12px}
+.dot{width:9px; height:9px; border-radius:50%}
+.cityWrap{padding:14px}
+.city{
+  height:705px;
+  border-radius:23px;
+  border:1px solid var(--line);
+  position:relative;
+  overflow:hidden;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    radial-gradient(circle at 18% 22%, rgba(93,183,255,.16), transparent 23%),
+    radial-gradient(circle at 84% 70%, rgba(159,122,234,.18), transparent 24%),
+    radial-gradient(circle at 43% 84%, rgba(72,211,142,.10), transparent 20%),
+    #0b1626;
+  background-size:80px 80px,80px 80px,auto,auto,auto,auto;
+}
+.city:before{
+  content:"";
+  position:absolute; inset:-30%;
+  background:linear-gradient(120deg, transparent 35%, rgba(255,255,255,.07) 50%, transparent 65%);
+  transform:translateX(-60%) rotate(8deg);
+  animation:sweep 8s linear infinite;
+  pointer-events:none;
+}
+@keyframes sweep{0%{transform:translateX(-60%) rotate(8deg)}100%{transform:translateX(60%) rotate(8deg)}}
+.road{position:absolute; background:rgba(255,255,255,.08); box-shadow:0 0 0 1px rgba(255,255,255,.04) inset}
+.road.h{height:12px; width:110%; left:-5%}
+.road.v{width:12px; height:110%; top:-5%}
+.river{
+  position:absolute;
+  width:170px; height:120%;
+  left:360px; top:-40px;
+  background:linear-gradient(90deg, transparent, rgba(67,217,217,.13), rgba(67,217,217,.22), rgba(67,217,217,.09), transparent);
+  transform:rotate(12deg);
+  filter:blur(.1px);
+}
+.zone{
+  position:absolute;
+  padding:8px 11px;
+  color:var(--muted);
+  background:rgba(5,12,22,.62);
+  border:1px solid var(--line);
+  backdrop-filter:blur(5px);
+  border-radius:13px;
+  font-size:12px;
+}
+.school{
+  position:absolute;
+  width:78px; height:78px;
+  border-radius:21px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.09);
+  box-shadow:0 14px 32px rgba(0,0,0,.35);
+  cursor:pointer;
+  transition:.18s ease;
+  user-select:none;
+}
+.school:hover{transform:translateY(-3px) scale(1.03)}
+.school.selected{outline:3px solid rgba(255,255,255,.34); transform:translateY(-3px) scale(1.06)}
+.school .ico{font-size:24px}
+.school .abbr{font-size:10px; font-weight:900; letter-spacing:.08em; margin-top:5px}
+.school .alert{
+  position:absolute; top:-6px; right:-6px;
+  width:22px; height:22px; border-radius:999px;
+  display:none; align-items:center; justify-content:center;
+  background:var(--red); color:#16070a; font-size:13px; font-weight:900;
+  box-shadow:0 0 0 3px rgba(7,16,27,.8);
+}
+.school.crisis .alert{display:flex}
+.school.es{background:linear-gradient(180deg, rgba(72,211,142,.32), rgba(72,211,142,.11))}
+.school.ms{background:linear-gradient(180deg, rgba(93,183,255,.32), rgba(93,183,255,.11))}
+.school.hs{background:linear-gradient(180deg, rgba(255,209,102,.32), rgba(255,209,102,.11))}
+.school.ops{background:linear-gradient(180deg, rgba(159,122,234,.33), rgba(159,122,234,.12))}
+.school.alt{background:linear-gradient(180deg, rgba(67,217,217,.30), rgba(67,217,217,.10))}
+.ring{
+  position:absolute;
+  border:2px solid rgba(93,183,255,.32);
+  width:108px; height:108px;
+  border-radius:999px;
+  pointer-events:none;
+  animation:ring 3.3s infinite ease-out;
+}
+@keyframes ring{0%{transform:scale(.58); opacity:.75}100%{transform:scale(1.7); opacity:0}}
+.toolbar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  border-top:1px solid var(--line);
+  padding:14px 16px;
+}
+.side{display:grid; grid-template-rows:auto auto 1fr; gap:16px}
+.panel{padding:16px}
+.panel h2{margin:0 0 6px; font-size:19px}
+.scenario{
+  border:1px solid rgba(255,255,255,.11);
+  background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.035));
+  border-radius:18px;
+  padding:14px;
+  margin-top:12px;
+}
+.scenario .eyebrow{color:var(--gold); font-weight:900; font-size:12px; letter-spacing:.08em; text-transform:uppercase}
+.scenario h3{margin:6px 0 8px; font-size:18px}
+.scenario p{margin:0; color:var(--muted); font-size:13px; line-height:1.42}
+.choiceGrid{display:grid; gap:9px; margin-top:12px}
+.choiceBtn{
+  display:block;
+  width:100%;
+  text-align:left;
+  padding:11px;
+  border-radius:14px;
+}
+.choiceBtn b{display:block; margin-bottom:3px}
+.choiceBtn small{color:var(--muted); display:block; line-height:1.3; font-weight:600}
+.detail .schoolName{font-size:23px; font-weight:950; margin-top:6px}
+.detail .schoolMeta{color:var(--muted); font-size:13px; margin-top:4px}
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:9px;
+  margin-top:13px;
+}
+.metric{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.045);
+  border-radius:14px;
+  padding:11px;
+}
+.metric .k{color:var(--muted); text-transform:uppercase; letter-spacing:.07em; font-size:11px}
+.metric .v{font-size:22px; font-weight:950; margin-top:5px}
+.actions{display:grid; gap:9px; margin-top:13px}
+.actionCard{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.045);
+  border-radius:15px;
+  padding:12px;
+}
+.actionCard h4{margin:0 0 5px}
+.actionCard p{margin:0 0 10px; color:var(--muted); font-size:13px; line-height:1.38}
+.feed{display:flex; flex-direction:column; gap:10px; max-height:310px; overflow:auto; padding-right:3px; margin-top:12px}
+.event{
+  border:1px solid rgba(255,255,255,.09);
+  border-left:4px solid var(--accent);
+  border-radius:14px;
+  padding:11px;
+  background:rgba(255,255,255,.045);
+}
+.event b{display:block; margin-bottom:4px}
+.event div{font-size:13px; color:var(--muted); line-height:1.35}
+.forecast{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:12px;
+}
+.forecastBox{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:11px;
+  background:rgba(255,255,255,.04);
+}
+.forecastBox .big{font-size:21px; font-weight:950}
+.forecastBox .small{color:var(--muted); font-size:12px; margin-top:4px}
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:20;
+  padding:22px;
+}
+.modal{
+  max-width:680px;
+  border-radius:24px;
+  background:linear-gradient(180deg,#172844,#0e1a2d);
+  border:1px solid var(--line);
+  box-shadow:0 30px 90px rgba(0,0,0,.58);
+  padding:22px;
+}
+.modal h2{margin:0 0 8px; font-size:28px}
+.modal p{color:var(--muted); line-height:1.5}
+.modal .modalActions{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px}
+.toast{
+  position:fixed; left:50%; bottom:20px; transform:translateX(-50%);
+  background:#0d1829; border:1px solid var(--line); border-radius:999px;
+  padding:11px 15px; color:var(--ink); box-shadow:var(--shadow);
+  display:none; z-index:30; font-weight:800;
+}
+@media(max-width:1300px){
+  .wrap{grid-template-columns:1fr}
+  .kpiRow{grid-template-columns:repeat(4,1fr)}
+  .city{height:620px}
+}
+@media(max-width:760px){
+  .wrap{padding:10px}
+  .top{align-items:flex-start; flex-direction:column}
+  .kpiRow{grid-template-columns:repeat(2,1fr)}
+  .city{height:560px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="card top">
+    <div class="brand">
+      <h1>District Builder v2</h1>
+      <p>Run a large urban school district. Balance enrollment, staffing, facilities, transportation, academics, public trust, and board politics.</p>
+    </div>
+    <div class="badges">
+      <span class="badge">📅 <b id="dateBadge">August • Year 1</b></span>
+      <span class="badge">🎯 Goal: survive 24 months with trust, academics, and solvency intact</span>
+      <span class="badge">🏙️ Urban district strategy sim</span>
+    </div>
+  </header>
+
+  <section class="kpiRow" id="kpis"></section>
+
+  <main class="card game">
+    <div class="mapHeader">
+      <div>
+        <h2>Metro Learning City</h2>
+        <div class="sub">Click a campus, then make targeted moves. Red alerts mark schools with a serious operational, climate, staffing, or attendance risk.</div>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--green)"></i> Elementary</span>
+        <span><i class="dot" style="background:var(--accent)"></i> Middle</span>
+        <span><i class="dot" style="background:var(--gold)"></i> High</span>
+        <span><i class="dot" style="background:var(--cyan)"></i> Alternative</span>
+        <span><i class="dot" style="background:var(--accent2)"></i> Operations</span>
+      </div>
+    </div>
+    <div class="cityWrap">
+      <div class="city" id="city">
+        <div class="river"></div>
+        <div class="road h" style="top:118px"></div>
+        <div class="road h" style="top:322px"></div>
+        <div class="road h" style="top:536px"></div>
+        <div class="road v" style="left:176px"></div>
+        <div class="road v" style="left:486px"></div>
+        <div class="road v" style="left:748px"></div>
+
+        <div class="zone" style="left:36px;top:34px">Northwest Cluster</div>
+        <div class="zone" style="left:540px;top:48px">Downtown Corridor</div>
+        <div class="zone" style="left:58px;top:392px">South Valley</div>
+        <div class="zone" style="left:818px;top:406px">East Mesa Growth Area</div>
+        <div class="zone" style="left:385px;top:612px">Airport / Industrial</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="primary" onclick="advanceMonth()">Advance 1 Month</button>
+      <button class="green" onclick="openBoardPacket()">Board Packet</button>
+      <button onclick="districtMove('attendance')">District Attendance Push</button>
+      <button onclick="districtMove('transport')">Optimize Transportation</button>
+      <button onclick="districtMove('data')">Invest in Data Systems</button>
+      <button class="gold" onclick="districtMove('budget')">Freeze Nonessential Spending</button>
+      <button class="red" onclick="resetGame()">Reset</button>
+    </div>
+  </main>
+
+  <aside class="side">
+    <section class="card panel" id="scenarioPanel"></section>
+    <section class="card panel detail" id="detailPanel"></section>
+    <section class="card panel">
+      <h2>Superintendent Feed</h2>
+      <div class="sub">Board requests, family pressure, operations alerts, and political consequences.</div>
+      <div class="forecast" id="forecast"></div>
+      <div class="feed" id="feed"></div>
+    </section>
+  </aside>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const months = ["August","September","October","November","December","January","February","March","April","May","June","July"];
+
+function freshState(){
+  return {
+    month:0,
+    year:1,
+    selected:"h1",
+    boardTrust:64,
+    familyTrust:67,
+    budget:612,
+    deficit:24,
+    achievement:55,
+    attendance:89,
+    facilities:66,
+    staffing:82,
+    transportation:62,
+    equity:58,
+    dataQuality:54,
+    enrollmentTrend:-0.7,
+    politicalHeat:38,
+    actionPoints:3,
+    scenario:null,
+    log:[
+      ["Welcome to the hot seat","You have inherited a large urban district with aging buildings, uneven attendance, a tight labor market, and board pressure for visible progress."],
+      ["Opening board memo","Your first 24 months will be judged on academics, fiscal discipline, family trust, and whether operations stop surprising people."]
+    ],
+    schools:[
+      {id:"ops", type:"ops", abbr:"OPS", icon:"🏛️", name:"District Operations Center", zone:"Central Office", x:474,y:262, enrollment:0, capacity:0, staff:220, vacancies:18, condition:72, attendance:0, achievement:0, climate:65, transport:62, equity:58},
+      {id:"e1", type:"es", abbr:"ES", icon:"🏫", name:"Mesa Vista Elementary", zone:"Northwest Cluster", x:78,y:168, enrollment:642, capacity:720, staff:54, vacancies:4, condition:74, attendance:91, achievement:58, climate:70, transport:68, equity:60},
+      {id:"e2", type:"es", abbr:"ES", icon:"🏫", name:"Rio Grande Elementary", zone:"South Valley", x:260,y:470, enrollment:594, capacity:680, staff:48, vacancies:7, condition:55, attendance:88, achievement:50, climate:61, transport:58, equity:51},
+      {id:"e3", type:"es", abbr:"ES", icon:"🏫", name:"Sunport Elementary", zone:"Downtown Corridor", x:664,y:166, enrollment:716, capacity:760, staff:56, vacancies:3, condition:84, attendance:93, achievement:63, climate:75, transport:73, equity:63},
+      {id:"e4", type:"es", abbr:"ES", icon:"🏫", name:"Foothills Elementary", zone:"East Mesa Growth Area", x:900,y:244, enrollment:824, capacity:780, staff:57, vacancies:9, condition:79, attendance:92, achievement:61, climate:69, transport:55, equity:56},
+      {id:"m1", type:"ms", abbr:"MS", icon:"📘", name:"Valley View Middle", zone:"Downtown Corridor", x:544,y:86, enrollment:908, capacity:980, staff:69, vacancies:8, condition:64, attendance:87, achievement:48, climate:56, transport:61, equity:50},
+      {id:"m2", type:"ms", abbr:"MS", icon:"📘", name:"Cibola Ridge Middle", zone:"East Mesa Growth Area", x:850,y:448, enrollment:984, capacity:940, staff:71, vacancies:10, condition:76, attendance:90, achievement:56, climate:69, transport:53, equity:55},
+      {id:"h1", type:"hs", abbr:"HS", icon:"🎓", name:"Central City High", zone:"South Valley", x:166,y:574, enrollment:1860, capacity:2100, staff:130, vacancies:17, condition:51, attendance:83, achievement:44, climate:50, transport:57, equity:45},
+      {id:"h2", type:"hs", abbr:"HS", icon:"🎓", name:"Sandia Tech High", zone:"East Mesa Growth Area", x:696,y:560, enrollment:1684, capacity:1650, staff:119, vacancies:5, condition:88, attendance:95, achievement:68, climate:82, transport:60, equity:66},
+      {id:"a1", type:"alt", abbr:"ALT", icon:"🧭", name:"Reengagement Academy", zone:"Airport / Industrial", x:426,y:588, enrollment:310, capacity:420, staff:32, vacancies:6, condition:61, attendance:76, achievement:41, climate:59, transport:48, equity:62}
+    ]
+  }
+}
+let state = freshState();
+
+const $ = s => document.querySelector(s);
+function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
+function round(v){return Math.round(v)}
+function fmtMoney(v){return "$"+Math.round(v)+"M"}
+function campusList(){return state.schools.filter(s=>s.type!=="ops")}
+function avg(field){const a=campusList(); return a.reduce((m,s)=>m+s[field],0)/a.length}
+function selected(){return state.schools.find(s=>s.id===state.selected)}
+function totalEnrollment(){return campusList().reduce((a,s)=>a+s.enrollment,0)}
+function schoolColor(t){return {es:"var(--green)", ms:"var(--accent)", hs:"var(--gold)", alt:"var(--cyan)", ops:"var(--accent2)"}[t]}
+
+function recomputeDistrict(){
+  state.attendance = round(avg("attendance"));
+  state.achievement = round(avg("achievement"));
+  state.facilities = round(avg("condition"));
+  state.staffing = round(100 - avg("vacancies"));
+  state.transportation = round(avg("transport"));
+  state.equity = round(avg("equity"));
+  state.deficit = clamp(round(720 - state.budget + (100-state.staffing)*.35 + (100-state.facilities)*.2), 0, 220);
+}
+
+function statusWord(v){
+  if(v>=80) return "Strong";
+  if(v>=65) return "Stable";
+  if(v>=50) return "Fragile";
+  return "Crisis";
+}
+function fillColor(v){
+  if(v>=75) return "var(--green)";
+  if(v>=55) return "var(--gold)";
+  return "var(--red)";
+}
+function crisis(s){
+  if(s.type==="ops") return state.dataQuality<45 || state.transportation<45;
+  return s.condition<55 || s.attendance<82 || s.climate<52 || s.vacancies>14 || s.enrollment>s.capacity*1.05;
+}
+
+function renderKPIs(){
+  recomputeDistrict();
+  const items = [
+    ["Budget", fmtMoney(state.budget), "Deficit risk: "+fmtMoney(state.deficit), clamp(100-state.deficit/2,0,100)],
+    ["Board Trust", state.boardTrust+"%", statusWord(state.boardTrust), state.boardTrust],
+    ["Family Trust", state.familyTrust+"%", statusWord(state.familyTrust), state.familyTrust],
+    ["Achievement", state.achievement+"%", "District composite", state.achievement],
+    ["Attendance", state.attendance+"%", "Average daily attendance", state.attendance],
+    ["Facilities", state.facilities+"%", "Campus condition", state.facilities],
+    ["Staffing", state.staffing+"%", "Vacancy pressure", state.staffing],
+    ["Transport", state.transportation+"%", "Routes and reliability", state.transportation]
+  ];
+  $("#kpis").innerHTML = items.map(([label,num,hint,val])=>`
+    <div class="card kpi">
+      <div class="label">${label}</div>
+      <div class="num">${num}</div>
+      <div class="hint">${hint}</div>
+      <div class="miniBar"><div class="miniFill" style="width:${clamp(val,0,100)}%;background:${fillColor(val)}"></div></div>
+    </div>`).join("");
+  $("#dateBadge").textContent = `${months[state.month]} • Year ${state.year} • ${state.actionPoints} AP`;
+}
+
+function renderMap(){
+  const city=$("#city");
+  city.querySelectorAll(".school,.ring").forEach(n=>n.remove());
+  state.schools.forEach(s=>{
+    const r=document.createElement("div");
+    r.className="ring";
+    r.style.left=(s.x-15)+"px";
+    r.style.top=(s.y-15)+"px";
+    r.style.borderColor = s.type==="hs" ? "rgba(255,209,102,.34)" : s.type==="es" ? "rgba(72,211,142,.34)" : s.type==="alt" ? "rgba(67,217,217,.34)" : s.type==="ops" ? "rgba(159,122,234,.34)" : "rgba(93,183,255,.34)";
+    city.appendChild(r);
+
+    const el=document.createElement("div");
+    el.className=`school ${s.type} ${state.selected===s.id?"selected":""} ${crisis(s)?"crisis":""}`;
+    el.style.left=s.x+"px"; el.style.top=s.y+"px";
+    el.title=s.name;
+    el.innerHTML=`<span class="alert">!</span><div class="ico">${s.icon}</div><div class="abbr">${s.abbr}</div>`;
+    el.onclick=()=>{state.selected=s.id; render()};
+    city.appendChild(el);
+  });
+}
+
+function scenarioText(){
+  if(!state.scenario){
+    state.scenario = pickScenario();
+  }
+  const s=state.scenario;
+  $("#scenarioPanel").innerHTML = `
+    <h2>Decision Desk</h2>
+    <div class="sub">Monthly scenario. Your choice changes district conditions immediately.</div>
+    <div class="scenario">
+      <div class="eyebrow">${s.tag}</div>
+      <h3>${s.title}</h3>
+      <p>${s.text}</p>
+      <div class="choiceGrid">
+        ${s.choices.map((c,i)=>`<button class="choiceBtn" onclick="chooseScenario(${i})"><b>${c.label}</b><small>${c.desc}</small></button>`).join("")}
+      </div>
+    </div>
+  `;
+}
+function pickScenario(){
+  const choices = [
+    {
+      tag:"Budget Hearing",
+      title:"The board wants visible cuts without touching classrooms.",
+      text:"Finance says the structural deficit is real. Principals say any freeze will slow support. Families want services protected.",
+      choices:[
+        {label:"Freeze central contracts", desc:"+Budget, -Operations, small -Board Trust", effect:()=>{state.budget+=22; state.transportation-=3; state.dataQuality-=2; state.boardTrust-=1; log("Spending freeze approved","You protected classrooms, but operations teams now have less flexibility.")}},
+        {label:"Protect operations and explain the deficit", desc:"+Board Trust, -Budget", effect:()=>{state.budget-=10; state.boardTrust+=5; state.familyTrust+=1; log("Transparent budget memo","The board appreciated the candor, but the deficit remains.")}},
+        {label:"Use one-time reserves", desc:"+Family Trust now, larger deficit later", effect:()=>{state.budget+=8; state.familyTrust+=4; state.politicalHeat+=7; log("Reserves used","The short-term pain eased, but critics warn you are pushing the problem forward.")}}
+      ]
+    },
+    {
+      tag:"Enrollment Shock",
+      title:"East Mesa growth is crowding two campuses.",
+      text:"New housing is bringing students faster than facilities planning can react. South Valley schools still have open seats.",
+      choices:[
+        {label:"Launch boundary study", desc:"+Facilities, -Family Trust, +Political Heat", effect:()=>{state.facilities+=4; state.familyTrust-=4; state.politicalHeat+=9; campusList().forEach(s=>{if(s.zone.includes("East"))s.enrollment-=25;if(s.zone.includes("South"))s.enrollment+=18}); log("Boundary study launched","Families are nervous, but the district has started addressing crowding.")}},
+        {label:"Add portables in growth area", desc:"+Facilities short-term, -Budget", effect:()=>{state.budget-=18; campusList().forEach(s=>{if(s.zone.includes("East"))s.condition+=4}); log("Portable classrooms added","Crowding pressure eased, but this is not a long-term capital strategy.")}},
+        {label:"Open seats through choice transportation", desc:"+Equity, -Transportation", effect:()=>{campusList().forEach(s=>s.equity+=3); state.transportation-=6; log("Choice transportation expanded","More families can access open seats, but bus reliability is now under strain.")}}
+      ]
+    },
+    {
+      tag:"Attendance Crisis",
+      title:"Chronic absenteeism is trending up after winter break.",
+      text:"The data team flags several campuses where ninth grade attendance is falling quickly.",
+      choices:[
+        {label:"Deploy attendance strike teams", desc:"+Attendance, -Budget", effect:()=>{campusList().forEach(s=>s.attendance+=3); state.budget-=11; state.familyTrust+=2; log("Attendance strike teams deployed","Home visits, nudges, and case management produced early movement.")}},
+        {label:"Focus only on high schools", desc:"Big HS impact, smaller system effect", effect:()=>{campusList().forEach(s=>{if(s.type==="hs")s.attendance+=6}); state.budget-=7; log("High school attendance sprint","Graduation-risk campuses received focused attendance support.")}},
+        {label:"Ask principals to solve locally", desc:"+Budget, uneven results", effect:()=>{campusList().forEach(s=>s.attendance += Math.random()>.5?2:-2); state.budget+=2; state.boardTrust-=2; log("Local attendance response","Some schools improved, but the board asked why there was no coherent district plan.")}}
+      ]
+    },
+    {
+      tag:"Staffing Market",
+      title:"Teacher vacancies are spiking in hard-to-staff schools.",
+      text:"HR proposes stipends, but finance warns they create recurring costs.",
+      choices:[
+        {label:"Target stipends to shortage schools", desc:"+Staffing, -Budget, +Equity", effect:()=>{campusList().forEach(s=>{if(s.vacancies>7)s.vacancies-=5; s.equity+=2}); state.budget-=17; log("Targeted stipends approved","Vacancies fell in the schools that needed the most help.")}},
+        {label:"Districtwide retention bonus", desc:"+Family Trust, +Staffing, --Budget", effect:()=>{campusList().forEach(s=>s.vacancies-=3); state.budget-=31; state.familyTrust+=3; log("Retention bonus announced","Morale improved, but the recurring cost will haunt budget season.")}},
+        {label:"Use long-term substitutes", desc:"+Budget, -Achievement, -Climate", effect:()=>{state.budget+=6; campusList().forEach(s=>{s.achievement-=2;s.climate-=2}); log("Substitute coverage expanded","Classes are covered, but instructional quality is taking a hit.")}}
+      ]
+    },
+    {
+      tag:"Data Problem",
+      title:"A public dashboard number is wrong.",
+      text:"A school community found an error before the district did. The board is asking what happened.",
+      choices:[
+        {label:"Own it and publish correction", desc:"+Trust, -Political Heat, requires humility", effect:()=>{state.familyTrust+=3; state.boardTrust+=4; state.politicalHeat-=5; state.dataQuality+=3; log("Correction published","The district took responsibility and explained the fix.")}},
+        {label:"Quietly patch the number", desc:"Small short-term benefit, trust risk", effect:()=>{state.dataQuality+=2; state.politicalHeat+=5; state.familyTrust-=2; log("Quiet dashboard patch","The number is fixed, but trust did not improve.")}},
+        {label:"Fund data quality automation", desc:"+Data Quality, -Budget", effect:()=>{state.dataQuality+=12; state.budget-=12; state.boardTrust+=2; log("Data quality investment","Automated checks reduced the odds of future public errors.")}}
+      ]
+    }
+  ];
+  return choices[Math.floor(Math.random()*choices.length)];
+}
+function chooseScenario(i){
+  if(!state.scenario) return;
+  state.scenario.choices[i].effect();
+  normalize();
+  state.scenario=null;
+  state.actionPoints=Math.max(0,state.actionPoints-1);
+  toast("Scenario decision made");
+  render();
+}
+
+function renderDetail(){
+  const s=selected();
+  const isOps=s.type==="ops";
+  const cap = isOps ? "" : ` • ${s.enrollment.toLocaleString()} / ${s.capacity.toLocaleString()} seats`;
+  $("#detailPanel").innerHTML = `
+    <h2>Campus Command</h2>
+    <div class="sub">Selected ${isOps?"district system":"campus"}</div>
+    <div class="schoolName">${s.name}</div>
+    <div class="schoolMeta">${s.zone}${cap}</div>
+    <div class="metrics">
+      ${isOps ? `
+        <div class="metric"><div class="k">Data Quality</div><div class="v">${state.dataQuality}%</div></div>
+        <div class="metric"><div class="k">Transportation</div><div class="v">${state.transportation}%</div></div>
+        <div class="metric"><div class="k">Political Heat</div><div class="v">${state.politicalHeat}%</div></div>
+        <div class="metric"><div class="k">Action Points</div><div class="v">${state.actionPoints}</div></div>
+      ` : `
+        <div class="metric"><div class="k">Attendance</div><div class="v">${round(s.attendance)}%</div></div>
+        <div class="metric"><div class="k">Achievement</div><div class="v">${round(s.achievement)}%</div></div>
+        <div class="metric"><div class="k">Condition</div><div class="v">${round(s.condition)}%</div></div>
+        <div class="metric"><div class="k">Vacancies</div><div class="v">${round(s.vacancies)}</div></div>
+        <div class="metric"><div class="k">Climate</div><div class="v">${round(s.climate)}%</div></div>
+        <div class="metric"><div class="k">Equity</div><div class="v">${round(s.equity)}%</div></div>
+      `}
+    </div>
+    <div class="actions">
+      ${isOps ? opsActions() : campusActions(s)}
+    </div>
+  `;
+}
+function campusActions(s){
+  return `
+    <div class="actionCard">
+      <h4>High-dosage tutoring sprint</h4>
+      <p>Boost achievement and attendance at this campus. Best for schools with low academic outcomes.</p>
+      <button onclick="campusMove('tutoring')" ${state.actionPoints<1?"disabled":""}>Spend 1 AP and $10M</button>
+    </div>
+    <div class="actionCard">
+      <h4>Facilities rapid repair</h4>
+      <p>Address visible building problems, improve climate, and reduce family complaints.</p>
+      <button onclick="campusMove('repair')" ${state.actionPoints<1?"disabled":""}>Spend 1 AP and $14M</button>
+    </div>
+    <div class="actionCard">
+      <h4>Staffing surge</h4>
+      <p>Add targeted staff and reduce vacancies. Improves climate and attendance.</p>
+      <button onclick="campusMove('staff')" ${state.actionPoints<1?"disabled":""}>Spend 1 AP and $9M</button>
+    </div>
+    <div class="actionCard">
+      <h4>Community school partnership</h4>
+      <p>Increase family trust, attendance, and equity through wraparound supports.</p>
+      <button onclick="campusMove('community')" ${state.actionPoints<1?"disabled":""}>Spend 1 AP and $8M</button>
+    </div>
+  `;
+}
+function opsActions(){
+  return `
+    <div class="actionCard">
+      <h4>Route optimization command center</h4>
+      <p>Improve transportation reliability, but implementation creates short-term noise.</p>
+      <button onclick="districtMove('transport')" ${state.actionPoints<1?"disabled":""}>Spend 1 AP and $10M</button>
+    </div>
+    <div class="actionCard">
+      <h4>Data warehouse modernization</h4>
+      <p>Improve data quality and board confidence. Enables better early warning systems.</p>
+      <button onclick="districtMove('data')" ${state.actionPoints<1?"disabled":""}>Spend 1 AP and $16M</button>
+    </div>
+    <div class="actionCard">
+      <h4>Capital planning office</h4>
+      <p>Improve facilities planning and reduce future surprises.</p>
+      <button onclick="districtMove('capital')" ${state.actionPoints<1?"disabled":""}>Spend 1 AP and $18M</button>
+    </div>
+  `;
+}
+
+function spendAP(cost=1){
+  if(state.actionPoints<cost){toast("No action points left this month"); return false}
+  state.actionPoints-=cost;
+  return true;
+}
+function campusMove(kind){
+  const s=selected();
+  if(!s || s.type==="ops") return;
+  if(!spendAP()) return;
+  if(kind==="tutoring"){
+    s.achievement+=9; s.attendance+=2; s.climate+=1; state.budget-=10;
+    log("Tutoring sprint launched", `${s.name} received targeted tutoring and attendance supports.`);
+  }
+  if(kind==="repair"){
+    s.condition+=18; s.climate+=5; state.budget-=14; state.familyTrust+=2;
+    log("Rapid repair completed", `${s.name} got a visible facilities improvement.`);
+  }
+  if(kind==="staff"){
+    s.vacancies-=6; s.climate+=5; s.attendance+=2; state.budget-=9;
+    log("Staffing surge deployed", `${s.name} reduced vacancies and stabilized daily operations.`);
+  }
+  if(kind==="community"){
+    s.equity+=8; s.attendance+=3; s.climate+=4; state.budget-=8; state.familyTrust+=3;
+    log("Community partnership expanded", `${s.name} added wraparound supports and stronger family engagement.`);
+  }
+  normalize(); render();
+}
+function districtMove(kind){
+  if(!spendAP()) return;
+  if(kind==="attendance"){
+    campusList().forEach(s=>s.attendance+=3);
+    state.budget-=12; state.familyTrust+=2;
+    log("District attendance push","A coordinated attendance campaign launched across all schools.");
+  }
+  if(kind==="transport"){
+    campusList().forEach(s=>s.transport+=6);
+    state.transportation+=8; state.budget-=10; state.politicalHeat+=2;
+    log("Transportation optimized","Route reliability improved, though the first week produced complaints.");
+  }
+  if(kind==="data"){
+    state.dataQuality+=13; state.boardTrust+=3; state.budget-=16;
+    log("Data systems upgraded","Dashboards and early-warning tools became more reliable.");
+  }
+  if(kind==="budget"){
+    state.budget+=18; state.boardTrust+=1; campusList().forEach(s=>{s.climate-=1;s.condition-=1});
+    log("Spending freeze","The district bought fiscal breathing room, but schools feel the squeeze.");
+  }
+  if(kind==="capital"){
+    campusList().forEach(s=>s.condition+=5);
+    state.budget-=18; state.boardTrust+=2;
+    log("Capital planning office funded","Facilities surprises should become less frequent.");
+  }
+  normalize(); render();
+}
+
+function advanceMonth(){
+  state.month++;
+  if(state.month>=12){state.month=0; state.year++}
+  state.actionPoints=3;
+
+  campusList().forEach(s=>{
+    const crowd = s.capacity ? Math.max(0,(s.enrollment-s.capacity)/s.capacity) : 0;
+    s.condition -= 1.6 + Math.random()*1.8;
+    s.attendance += Math.random()*2.6 - 1.2 - crowd*4 - Math.max(0,s.vacancies-10)*.07;
+    s.achievement += Math.random()*2.2 - 1.0 + (s.attendance-88)*.05 - Math.max(0,s.vacancies-8)*.05;
+    s.climate += Math.random()*2.4 - 1.2 - crowd*3 - Math.max(0,s.vacancies-10)*.08;
+    s.vacancies += Math.random()>.62 ? 1 : 0;
+    s.transport += Math.random()*2.2 - 1.1;
+    if(s.zone.includes("East")) s.enrollment += Math.round(8+Math.random()*14);
+    if(s.zone.includes("South")) s.enrollment -= Math.round(Math.random()*8);
+  });
+
+  state.budget -= 8 + Math.max(0, 70-state.facilities)*.05;
+  state.politicalHeat += Math.random()*4 - 1.5;
+  if(state.deficit>80){state.boardTrust-=3; state.politicalHeat+=4}
+  if(state.attendance<86){state.familyTrust-=2; state.boardTrust-=1}
+  if(state.facilities<60){state.familyTrust-=2; state.politicalHeat+=3}
+  if(state.achievement>60){state.boardTrust+=2; state.familyTrust+=1}
+  if(state.dataQuality<45 && Math.random()>.55){state.boardTrust-=3; log("Data reliability concern","A dashboard quality issue made the board question whether the district is seeing problems early enough.")}
+
+  const crisisSchools = campusList().filter(crisis);
+  if(crisisSchools.length){
+    const s = crisisSchools[Math.floor(Math.random()*crisisSchools.length)];
+    log("Campus alert: "+s.name, `${s.name} is flashing risk due to condition, attendance, vacancies, climate, or crowding.`);
+  } else {
+    log("Monthly update", "No major campus crisis this month. Keep the momentum going.");
+  }
+
+  state.scenario = pickScenario();
+  normalize();
+  render();
+  checkEnd();
+}
+
+function normalize(){
+  state.boardTrust=clamp(round(state.boardTrust),0,100);
+  state.familyTrust=clamp(round(state.familyTrust),0,100);
+  state.budget=clamp(round(state.budget),0,999);
+  state.politicalHeat=clamp(round(state.politicalHeat),0,100);
+  state.dataQuality=clamp(round(state.dataQuality),0,100);
+  state.transportation=clamp(round(state.transportation),0,100);
+  campusList().forEach(s=>{
+    ["condition","attendance","achievement","climate","transport","equity"].forEach(k=>s[k]=clamp(round(s[k]),0,100));
+    s.vacancies=clamp(round(s.vacancies),0,40);
+    s.enrollment=clamp(round(s.enrollment),120,2500);
+  });
+  recomputeDistrict();
+}
+function log(title,text){
+  state.log.unshift([title,text]);
+  state.log=state.log.slice(0,18);
+}
+function renderFeed(){
+  $("#feed").innerHTML = state.log.map(([t,txt])=>`<div class="event"><b>${t}</b><div>${txt}</div></div>`).join("");
+  const projected = totalEnrollment() * Math.pow(1+state.enrollmentTrend/100, 3);
+  $("#forecast").innerHTML = `
+    <div class="forecastBox"><div class="big">${Math.round(projected).toLocaleString()}</div><div class="small">3-year enrollment forecast</div></div>
+    <div class="forecastBox"><div class="big">${campusList().filter(crisis).length}</div><div class="small">campuses in alert status</div></div>
+  `;
+}
+function checkEnd(){
+  if(state.year>2 || state.budget<=0 || state.boardTrust<25 || state.familyTrust<25){
+    const won = state.year>2 && state.budget>0 && state.boardTrust>=45 && state.familyTrust>=45 && state.achievement>=50;
+    $("#overlay").style.display="flex";
+    $("#modal").innerHTML = `
+      <h2>${won ? "You survived the first 24 months." : "The coalition fractured."}</h2>
+      <p>${won
+        ? "You kept the district operational while improving enough indicators to maintain board and public confidence. The next campaign would be long-range redesign: boundaries, capital planning, career pathways, and school improvement."
+        : "The district hit a critical failure threshold: insolvency, collapsing trust, or sustained political crisis. In the full game, this would trigger state intervention, leadership turnover, or a forced corrective action plan."}</p>
+      <div class="modalActions">
+        <button class="primary" onclick="closeModal()">Keep exploring</button>
+        <button class="red" onclick="resetGame();closeModal()">Restart scenario</button>
+      </div>
+    `;
+  }
+}
+function openBoardPacket(){
+  $("#overlay").style.display="flex";
+  recomputeDistrict();
+  const concerns = [];
+  if(state.deficit>70) concerns.push("structural deficit");
+  if(state.facilities<62) concerns.push("aging facilities");
+  if(state.attendance<88) concerns.push("attendance decline");
+  if(state.staffing<78) concerns.push("vacancies");
+  if(state.politicalHeat>60) concerns.push("political heat");
+  if(!concerns.length) concerns.push("maintaining momentum");
+  $("#modal").innerHTML = `
+    <h2>Board Packet</h2>
+    <p><b>Current board concern:</b> ${concerns.join(", ")}.</p>
+    <p><b>Superintendent recommendation:</b> protect classroom-facing supports, make one visible facilities improvement, and pair every major decision with a public-facing explanation of tradeoffs.</p>
+    <p><b>Leading indicators:</b> Attendance ${state.attendance}%, Achievement ${state.achievement}%, Facilities ${state.facilities}%, Staffing ${state.staffing}%, Family Trust ${state.familyTrust}%.</p>
+    <div class="modalActions"><button class="primary" onclick="closeModal()">Back to game</button></div>
+  `;
+}
+function closeModal(){$("#overlay").style.display="none"}
+function resetGame(){state=freshState(); render(); toast("Prototype reset")}
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.style.display="block";
+  clearTimeout(window.__toast); window.__toast=setTimeout(()=>t.style.display="none",1600);
+}
+function render(){renderKPIs(); renderMap(); scenarioText(); renderDetail(); renderFeed();}
+render();
+</script>
+</body>
+</html>
